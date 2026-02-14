@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>古文単語完全暗記！</title>
+    <style>
+        body { font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif; background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        #app { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        .question-box { background: #333; color: white; padding: 40px 20px; border-radius: 15px; font-size: 30px; font-weight: bold; margin-bottom: 20px; }
+        .option { width: 100%; padding: 15px; margin-bottom: 10px; border: 2px solid #eee; border-radius: 10px; background: white; cursor: pointer; font-size: 16px; text-align: left; transition: 0.2s; }
+        .option:hover { background: #f8f9fa; border-color: #ddd; }
+        #next-btn { width: 100%; padding: 15px; background: #4a90e2; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 18px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="app">
+  <div id="start-screen">
+    <div style="font-size: 14px; font-weight: bold; color: #e53e3e; letter-spacing: 3px; margin-bottom: 10px;">最強暗記ツール</div>
+    <h1 style="font-size: 2rem; margin-bottom: 30px; color: #333;">古文単語完全暗記！</h1>
+    <div style="margin-bottom: 20px;">
+      <p style="font-weight: bold; color: #666;">出題数を選択：</p>
+      <div style="display: flex; justify-content: center; gap: 15px; margin-top: 10px;">
+        <label><input type="radio" name="num" value="10" checked> 10</label>
+        <label><input type="radio" name="num" value="20"> 20</label>
+        <label><input type="radio" name="num" value="30"> 30</label>
+        <label><input type="radio" name="num" value="52"> 52</label>
+      </div>
+    </div>
+    <button onclick="startApp()" style="width: 100%; padding: 20px; background: #4a90e2; color: white; border: none; border-radius: 15px; font-size: 20px; font-weight: bold; cursor: pointer;">開始！</button>
+  </div>
+
+  <div id="quiz-screen" style="display:none;">
+    <div id="counter" style="text-align: right; font-weight: bold; color: #888; margin-bottom: 10px;">0 / 0</div>
+    <div class="question-box"><span id="word-display">...</span></div>
+    <div id="options-container"></div>
+    <div id="result-message" style="font-size: 18px; font-weight: bold; margin: 15px 0;"></div>
+    <button id="next-btn" onclick="nextQuestion()" style="display:none;">次の問題へ ➔</button>
+    <button onclick="showResult()" style="margin-top:15px; padding: 10px; background: none; border: none; color: #999; cursor: pointer; text-decoration: underline;">中断する</button>
+  </div>
+
+  <div id="result-screen" style="display:none;">
+    <h2>テスト結果</h2>
+    <div id="score-display" style="font-size: 26px; font-weight: bold; color: #4a90e2; margin-bottom: 20px;"></div>
+    <div id="wrong-area" style="display:none; text-align: left; background: #fff5f5; padding: 15px; border-radius: 10px; border: 1px solid #feb2b2; margin-bottom: 20px;">
+      <p style="font-weight: bold; color: #c53030; margin: 0 0 10px 0;">間違えた単語：</p>
+      <ul id="wrong-list" style="margin: 0; padding-left: 20px; font-size: 14px;"></ul>
+    </div>
+    <button id="retry-wrong-btn" onclick="retryWrongOnes()" style="width:100%; padding:15px; background:#e53e3e; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold; margin-bottom:10px; display:none;">間違えた問題だけ解き直す</button>
+    <button onclick="location.reload()" style="width:100%; padding:15px; background:#4a90e2; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:bold;">最初に戻る</button>
+  </div>
+</div>
+
+<script>
+const rawData = `
+惑ふ,迷う・ひどく(〜する)
+謀る,工夫する・だます
+すさぶ(荒ぶ・進ぶ・遊ぶ),興じる・気の向くままに(何かを)する
+すまふ(争ふ・辞ふ),抵抗する・断る
+学ぶ,真似る・伝える
+ねぶ,年を取る・大人びる
+掟つ,決めておく・指図する
+うれふ(愁ふ・憂ふ),訴える
+むすぶ(結ぶ・掬ぶ),できる・(両手で水などを)すくう
+とぶらふ(訪ふ・弔ふ),訪ねる・見舞う・弔う
+やつす,質素にする・出家する
+障る,差し支える・妨げられる
+畏まる,恐縮する・恐縮して正座する
+託つ,嘆く
+分く,理解する
+慎む,遠慮する
+あらまほし,望ましい
+らうらうじ,巧みだ・上品だ
+うるせし,賢い・巧みだ
+はかばかし,しっかりしている・はっきりしている
+をさをさし,しっかりしている
+さうなし,比べるものがない
+くまなし,陰がない・なんでも知っている
+ずちなし,どうしようもない
+まさなし,よくない
+あいなし,つまらない・なんとなく
+はかなし,頼りない・ちょっとしたことだ
+こころづきなし,気にくわない
+敢へ無し,落胆している・はかない
+由無し,つまらない・関係がない
+おほけなし,身のほど知らずだ
+さがなし,意地が悪い・いたずらだ
+はしたなし,中途半端だ・きまり悪い・そっけない・激しい
+しどけなし,怠慢だ・気楽だ
+いぎたなし,寝坊だ
+人悪し,みっともない
+いぶせし,うっとうしい・気がかりだ
+口惜し,残念だ
+惜し,惜しい
+妬し,くやしい
+こちたし,うるさい・大げさだ・はなはだしい
+けし(怪し・異し),異様だ・よくない・悪くはない
+侘びし,苦しい
+心苦し,せつなくつらい・気がかりだ
+未し,まだ早い・(完全)ではない
+さかし(賢し),優れている・しっかりしている・こざかしい
+まばゆし,まぶしい・(まぶしいほど)美しい・恥ずかしい・見ていられない
+忝し,おそれ多い(申し訳ない)・おそれ多い(ありがたい)・面目ない
+かしこし(賢し・畏し),おそれ多い・優れた・うまい具合に・運のいいことに
+しげし(繁し・茂し),多い
+凄し,気味が悪い・さびしい・すばらしい
+いたし(甚し・痛し),すばらしい・ひどい・はなはだしい・それほど
+`;
+
+const allWords = rawData.trim().split('\n').map(line => {
+  const parts = line.split(',');
+  return { word: parts[0].trim(), meaning: parts[1].trim() };
+});
+
+let currentList = [];
+let currentIndex = 0;
+let correctCount = 0;
+let answeredCount = 0;
+let wrongItems = [];
+let canAnswer = true;
+const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playSound(type) {
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  if (type === 'correct') {
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    osc.start(); osc.stop(ctx.currentTime + 0.2);
+  } else {
+    osc.frequency.setValueAtTime(200, ctx.currentTime);
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    osc.start(); osc.stop(ctx.currentTime + 0.3);
+  }
+}
+
+function startApp() {
+  const num = parseInt(document.querySelector('input[name="num"]:checked').value);
+  const shuffled = [...allWords].sort(() => Math.random() - 0.5);
+  initQuiz(shuffled.slice(0, num));
+}
+
+function initQuiz(list) {
+  currentList = list; currentIndex = 0; correctCount = 0; answeredCount = 0; wrongItems = [];
+  setupQuiz();
+}
+
+function setupQuiz() {
+  canAnswer = true;
+  const item = currentList[currentIndex];
+  document.getElementById('start-screen').style.display = "none";
+  document.getElementById('quiz-screen').style.display = "block";
+  document.getElementById('result-screen').style.display = "none";
+  document.getElementById('word-display').innerText = item.word;
+  document.getElementById('counter').innerText = `${currentIndex + 1} / ${currentList.length}`;
+  document.getElementById('result-message').innerText = "";
+  document.getElementById('next-btn').style.display = "none";
+
+  const options = [item.meaning];
+  const others = allWords.filter(i => i.meaning !== item.meaning).map(i => i.meaning);
+  options.push(...others.sort(() => 0.5 - Math.random()).slice(0, 3));
+  
+  const container = document.getElementById('options-container');
+  container.innerHTML = "";
+  options.sort(() => 0.5 - Math.random()).forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = "option";
+    btn.innerText = opt;
+    btn.onclick = () => checkAnswer(btn, opt === item.meaning);
+    container.appendChild(btn);
+  });
+}
+
+function checkAnswer(btn, isCorrect) {
+  if (!canAnswer) return;
+  canAnswer = false; answeredCount++;
+  const msg = document.getElementById('result-message');
+  if (isCorrect) {
+    playSound('correct'); btn.style.background = "#d4edda"; btn.style.borderColor = "#28a745";
+    msg.innerText = "正解！"; msg.style.color = "#28a745"; correctCount++;
+  } else {
+    playSound('wrong'); btn.style.background = "#f8d7da"; btn.style.borderColor = "#dc3545";
+    msg.innerText = "正解： " + currentList[currentIndex].meaning; msg.style.color = "#dc3545";
+    if(!wrongItems.some(i => i.word === currentList[currentIndex].word)) wrongItems.push(currentList[currentIndex]);
+  }
+  document.getElementById('next-btn').style.display = "block";
+}
+
+function nextQuestion() {
+  currentIndex++;
+  if (currentIndex < currentList.length) setupQuiz();
+  else showResult();
+}
+
+function showResult() {
+  document.getElementById('quiz-screen').style.display = "none";
+  document.getElementById('result-screen').style.display = "block";
+  const rate = Math.round((correctCount / (answeredCount || 1)) * 100);
+  document.getElementById('score-display').innerText = `正答率: ${rate}% (${correctCount}/${answeredCount})`;
+  const listContainer = document.getElementById('wrong-list');
+  listContainer.innerHTML = "";
+  if (wrongItems.length > 0) {
+    document.getElementById('wrong-area').style.display = "block";
+    document.getElementById('retry-wrong-btn').style.display = "block";
+    document.getElementById('retry-wrong-btn').innerText = `間違えた ${wrongItems.length} 問を解き直す`;
+    wrongItems.forEach(i => {
+      const li = document.createElement('li');
+      li.innerHTML = `<strong>${i.word}</strong>: ${i.meaning}`;
+      listContainer.appendChild(li);
+    });
+  } else {
+    document.getElementById('wrong-area').style.display = "none";
+    document.getElementById('retry-wrong-btn').style.display = "none";
+  }
+}
+
+function retryWrongOnes() {
+  initQuiz([...wrongItems].sort(() => Math.random() - 0.5));
+}
+</script>
+
+</body>
+</html>
